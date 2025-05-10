@@ -1,0 +1,1 @@
+from fastapi_observer.main import setup_observer
