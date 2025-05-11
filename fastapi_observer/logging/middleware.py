@@ -67,8 +67,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     def process_body(raw_body: bytes) -> None:
         try:
             body = loads(raw_body) if raw_body else {}
-        except JSONDecodeError as err:
-            logger.error("Failed to decode JSON", exc_info=err)
+        except (JSONDecodeError, UnicodeDecodeError):
+            logger.error("Failed to decode JSON", exc_info=True)
             body = {}
 
         logger.info("Processed request body", **body)

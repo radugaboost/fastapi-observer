@@ -1,4 +1,6 @@
 import logging
+import sys
+import traceback
 from typing import Any
 
 import structlog
@@ -9,8 +11,9 @@ def setup_logger(enable_json: bool = True) -> None:
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.contextvars.merge_contextvars,
-        structlog.processors.TimeStamper(),
+        structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
+        process_exc_info,
     ]
 
     structlog.configure(
@@ -55,3 +58,15 @@ def _configure_default_logging_by_custom(shared_processors: list[Any], logs_rend
     root_uvicorn_logger = logging.getLogger()
     root_uvicorn_logger.addHandler(handler)
     root_uvicorn_logger.setLevel(logging.INFO)
+
+
+def process_exc_info(_: Any, __: Any, event_dict: dict[str, Any]) -> dict[str, Any]:
+    exc_info: bool = event_dict.pop("exc_info", False)
+    if not exc_info:
+        return event_dict
+
+    exc_traceback = sys.exc_info()[0]
+    frames = traceback.format_exception(exc_traceback, limit=10)
+    event_dict["frames"] = frames
+
+    return event_dict
