@@ -65,7 +65,7 @@ def process_exc_info(_: Any, __: Any, event_dict: dict[str, Any]) -> dict[str, A
     if not exc_info:
         return event_dict
 
-    exc_traceback = sys.exc_info()[0]
+    exc_traceback = sys.exc_info()[1]
     frames = traceback.format_exception(exc_traceback, limit=10)
     event_dict["frames"] = frames
 
