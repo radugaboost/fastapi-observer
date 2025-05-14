@@ -14,17 +14,31 @@ logger = structlog.get_logger(__name__)
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        sensitive_headers: tuple[str, ...] | None = None,
+        sensitive_body_fields: tuple[str, ...] | None = None
+    ) -> None:
         super().__init__(app)
+        self.sensitive_headers = (
+            tuple(h.lower() for h in sensitive_headers) if sensitive_headers else None
+        )
+        self.sensitive_body_fields = sensitive_body_fields
 
     async def dispatch(
         self, request: Request, call_next: Callable[..., Awaitable[Any]]
     ) -> Response:
         self.set_tracing_contextvars()
-        self.process_headers(
-            headers=request.headers,
-            sensitive_headers=("authorization",),
+        logger.info(
+            "Incoming HTTP request",
+            path=request.url.path,
+            method=request.method,
+            query_params=dict(request.query_params),
         )
+
+        self.process_headers(headers=request.headers)
 
         raw_body = await request.body()
         self.process_body(raw_body)
@@ -47,28 +61,26 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             span_id=span_id,
         )
 
-    @staticmethod
-    def process_headers(
-        headers: Headers,
-        sensitive_headers: tuple[str, ...],
-    ) -> None:
-        filtered_headers = {}
+    def process_headers(self, headers: Headers) -> None:
+        headers_dict = dict(headers)
 
-        for key, value in headers.items():
-            if key in sensitive_headers:
-                filtered_headers[key] = "hidden"
-                continue
+        if self.sensitive_headers:
+            for sensitive_header in self.sensitive_headers:
+                if sensitive_header in headers:
+                    headers_dict[sensitive_header] = "hidden"
 
-            filtered_headers[key] = value
+        logger.info("Processed request headers", headers=headers_dict)
 
-        logger.info("Processed request headers", headers=filtered_headers)
-
-    @staticmethod
-    def process_body(raw_body: bytes) -> None:
+    def process_body(self, raw_body: bytes) -> None:
         try:
             body = loads(raw_body) if raw_body else {}
         except (JSONDecodeError, UnicodeDecodeError):
             logger.error("Failed to decode JSON", exc_info=True)
             body = {}
 
-        logger.info("Processed request body", **body)
+        if self.sensitive_body_fields:
+            for sensitive_field in self.sensitive_body_fields:
+                if sensitive_field in body:
+                    body[sensitive_field] = "hidden"
+
+        logger.info("Processed request body", body=body)

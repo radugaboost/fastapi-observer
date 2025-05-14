@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-observer"
-version = "0.0.3"
+version = "0.0.4"
 description = "Observer for FastAPI"
 authors = ["Daniil Smirnov <skeal.smirnov2004@mail.ru>"]
 readme = "README.md"
@@ -56,3 +56,9 @@ extend_skip = ["*pypoetry*"]
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[[tool.mypy.overrides]]
+module = [
+    "prometheus_client.*",
+]
+ignore_missing_imports = true
