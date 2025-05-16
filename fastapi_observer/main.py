@@ -15,8 +15,8 @@ def setup_observer(app: FastAPI, config: ObserverConfig) -> None:
 
     app.add_route("/metrics", metrics)
 
-    app.add_middleware(MetricsMiddleware)  # noqa
     app.add_middleware(TracingMiddleware)  # noqa
+    app.add_middleware(MetricsMiddleware)  # noqa
     app.add_middleware(
         LoggingMiddleware,  # noqa
         sensitive_headers=config.sensitive_headers,
