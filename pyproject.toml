@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-observer"
-version = "0.0.5"
+version = "0.0.6"
 description = "Observer for FastAPI"
 authors = ["Daniil Smirnov <skeal.smirnov2004@mail.ru>"]
 readme = "README.md"

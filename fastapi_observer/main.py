@@ -11,10 +11,8 @@ from fastapi_observer.tracing.setup import setup_otel
 
 def setup_observer(app: FastAPI, config: ObserverConfig) -> None:
     setup_logger()
-    setup_otel(app, config.service_name)
 
     app.add_route("/metrics", metrics)
-
     app.add_middleware(TracingMiddleware)  # noqa
     app.add_middleware(MetricsMiddleware)  # noqa
     app.add_middleware(
@@ -22,6 +20,8 @@ def setup_observer(app: FastAPI, config: ObserverConfig) -> None:
         sensitive_headers=config.sensitive_headers,
         sensitive_body_fields=config.sensitive_body_fields,
     )
+
+    setup_otel(app, config.service_name)
 
     @app.get(
         "/health",
